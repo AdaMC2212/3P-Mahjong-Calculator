@@ -1,0 +1,7 @@
+{
+  "name": "3PMahjong Calculator",
+  "description": "A smart scoring assistant for Malaysia 3-Player Mahjong featuring AI hand recognition, configurable payouts, and automatic score tracking.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
