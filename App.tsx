@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import { createRoot } from 'react-dom/client';
-import { Settings, RotateCcw, Crown, ChevronRight } from 'lucide-react';
+import { Settings, RotateCcw, Crown, ChevronRight, CircleHelp } from 'lucide-react';
 import { Player, GameSettings, RoundResult, WinType, PlayerBonusStats } from './types';
 import { DEFAULT_SETTINGS, INITIAL_PLAYERS } from './constants';
 import { calculatePayout } from './services/scoringLogic';
 import { SettingsModal } from './components/SettingsModal';
 import { ScoringForm } from './components/ScoringForm';
 import { HistoryDetailModal } from './components/HistoryDetailModal';
+import { HelpModal } from './components/HelpModal';
 
 const App = () => {
   const [players, setPlayers] = useState<Player[]>(INITIAL_PLAYERS);
@@ -14,6 +15,7 @@ const App = () => {
   const [settings, setSettings] = useState<GameSettings>(DEFAULT_SETTINGS);
   const [history, setHistory] = useState<RoundResult[]>([]);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isHelpOpen, setIsHelpOpen] = useState(false);
   const [lastResult, setLastResult] = useState<RoundResult | null>(null);
   
   // State for History Modal
@@ -82,7 +84,7 @@ const App = () => {
           <div className="flex items-center gap-2">
             <h1 className="text-xl font-bold tracking-tight">3PMahjong Calculator</h1>
           </div>
-          <div className="flex gap-3">
+          <div className="flex gap-2">
              <button 
               onClick={resetGame}
               className="p-2 hover:bg-white/10 rounded-full transition"
@@ -91,8 +93,16 @@ const App = () => {
               <RotateCcw size={20} />
             </button>
             <button 
+              onClick={() => setIsHelpOpen(true)}
+              className="p-2 hover:bg-white/10 rounded-full transition"
+              aria-label="Help"
+            >
+              <CircleHelp size={20} />
+            </button>
+            <button 
               onClick={() => setIsSettingsOpen(true)}
               className="p-2 hover:bg-white/10 rounded-full transition"
+              aria-label="Settings"
             >
               <Settings size={20} />
             </button>
@@ -230,6 +240,11 @@ const App = () => {
         result={viewingResult}
         onClose={() => setViewingResult(null)}
         players={players}
+      />
+
+      <HelpModal 
+        isOpen={isHelpOpen}
+        onClose={() => setIsHelpOpen(false)}
       />
     </div>
   );

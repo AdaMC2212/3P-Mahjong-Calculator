@@ -45,7 +45,8 @@ const Stepper = ({ value, onChange, max, colorClass = "text-gray-900" }: { value
         if (max !== undefined && value >= max) return;
         onChange(value + 1);
       }}
-      className="w-8 sm:w-9 h-full bg-gray-50 hover:bg-gray-100 flex items-center justify-center border-l border-gray-200 active:bg-gray-200 text-gray-500 transition-colors"
+      className={`w-8 sm:w-9 h-full flex items-center justify-center border-l border-gray-200 transition-colors ${max !== undefined && value >= max ? 'bg-gray-100 text-gray-300 cursor-not-allowed' : 'bg-gray-50 hover:bg-gray-100 active:bg-gray-200 text-gray-500'}`}
+      disabled={max !== undefined && value >= max}
     >
       <Plus size={16} />
     </button>
@@ -111,6 +112,8 @@ export const ScoringForm: React.FC<Props> = ({ players, settings, dealerId, onCa
       setFan(Math.max(5, result.fan));
       
       // Update the WINNER'S stats with the AI result
+      // Note: We need to respect global Fei limit here too, but for simplicity 
+      // we'll apply it directly, assuming the AI doesn't hallucinate > 4 total.
       setAllPlayerStats(prev => ({
         ...prev,
         [winnerId]: {
@@ -165,6 +168,9 @@ export const ScoringForm: React.FC<Props> = ({ players, settings, dealerId, onCa
       default: return { label: '?', full: '?', bg: '' };
     }
   };
+
+  // Calculate total Fei currently assigned to verify limits
+  const currentTotalFei = Object.values(allPlayerStats).reduce((sum, stats) => sum + (stats.fei || 0), 0);
 
   return (
     <div className="bg-white p-4 rounded-xl shadow-md space-y-6">
@@ -322,34 +328,49 @@ export const ScoringForm: React.FC<Props> = ({ players, settings, dealerId, onCa
                     {settings.enableKong && <div className="w-24 sm:w-28 text-center">Kong (杠)</div>}
                  </div>
                  
-                 {players.map(p => (
-                   <div key={p.id} className={`grid gap-2 items-center ${settings.enableFei && settings.enableKong ? 'grid-cols-[1fr,auto,auto]' : 'grid-cols-[1fr,auto]'}`}>
-                      <div className="font-medium text-sm text-gray-700 pl-2 truncate">{p.name}</div>
-                      
-                      {settings.enableFei && (
-                        <div className="flex justify-center">
-                            <Stepper 
-                            value={allPlayerStats[p.id]?.fei || 0} 
-                            onChange={(v) => updatePlayerStat(p.id, 'fei', v)}
-                            max={4}
-                            colorClass="text-mj-gold"
-                            />
-                        </div>
-                      )}
-                      
-                      {settings.enableKong && (
-                        <div className="flex justify-center">
-                            <Stepper 
-                            value={allPlayerStats[p.id]?.kong || 0} 
-                            onChange={(v) => updatePlayerStat(p.id, 'kong', v)}
-                            colorClass="text-blue-600"
-                            />
-                        </div>
-                      )}
-                   </div>
-                 ))}
+                 {players.map(p => {
+                    const currentFei = allPlayerStats[p.id]?.fei || 0;
+                    // Max Fei for this player = Current amount + (4 - Total used by everyone else)
+                    // If total is 3, remaining is 1. If this player has 1, they can have up to 1+1=2.
+                    // Simplified: remaining global slots = 4 - currentTotalFei.
+                    // User can add = remaining global slots.
+                    // Max value = currentFei + remaining global slots.
+                    const maxFeiForPlayer = currentFei + (4 - currentTotalFei);
+
+                   return (
+                     <div key={p.id} className={`grid gap-2 items-center ${settings.enableFei && settings.enableKong ? 'grid-cols-[1fr,auto,auto]' : 'grid-cols-[1fr,auto]'}`}>
+                        <div className="font-medium text-sm text-gray-700 pl-2 truncate">{p.name}</div>
+                        
+                        {settings.enableFei && (
+                          <div className="flex justify-center">
+                              <Stepper 
+                              value={currentFei} 
+                              onChange={(v) => updatePlayerStat(p.id, 'fei', v)}
+                              max={maxFeiForPlayer}
+                              colorClass="text-mj-gold"
+                              />
+                          </div>
+                        )}
+                        
+                        {settings.enableKong && (
+                          <div className="flex justify-center">
+                              <Stepper 
+                              value={allPlayerStats[p.id]?.kong || 0} 
+                              onChange={(v) => updatePlayerStat(p.id, 'kong', v)}
+                              colorClass="text-blue-600"
+                              />
+                          </div>
+                        )}
+                     </div>
+                   );
+                 })}
               </div>
             </div>
+            {settings.enableFei && (
+               <p className="text-[10px] text-gray-400 mt-2 text-center">
+                 Total Fei used: {currentTotalFei}/4
+               </p>
+            )}
           </div>
         )}
 
