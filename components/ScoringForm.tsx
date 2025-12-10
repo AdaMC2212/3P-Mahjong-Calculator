@@ -170,7 +170,7 @@ export const ScoringForm: React.FC<Props> = ({ players, settings, dealerId, onCa
   };
 
   // Calculate total Fei currently assigned to verify limits
-  const currentTotalFei = Object.values(allPlayerStats).reduce((sum, stats) => sum + (stats.fei || 0), 0);
+  const currentTotalFei = (Object.values(allPlayerStats) as PlayerBonusStats[]).reduce((sum, stats) => sum + (stats.fei || 0), 0);
 
   return (
     <div className="bg-white p-4 rounded-xl shadow-md space-y-6">
