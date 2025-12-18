@@ -1,9 +1,8 @@
-
 import React, { useState } from 'react';
 import { createRoot } from 'react-dom/client';
-import { MahjongGame } from './components/MahjongGame';
-import { LamiGame } from './components/LamiGame';
-import { LandingPage } from './components/LandingPage';
+import { MahjongGame } from './components/MahjongGame.tsx';
+import { LamiGame } from './components/LamiGame.tsx';
+import { LandingPage } from './components/LandingPage.tsx';
 import { Home } from 'lucide-react';
 
 const App = () => {
@@ -18,7 +17,7 @@ const App = () => {
       {/* Header with Game Switcher */}
       <header className={`p-4 sticky top-0 z-30 shadow-md transition-colors duration-300 ${gameMode === 'mahjong' ? 'bg-mj-green' : 'bg-blue-600'}`}>
         <div className="max-w-md mx-auto flex flex-col gap-3">
-          <div className="flex justify-between items-center text-white">
+          <div className="flex justify-between side-center text-white">
             <h1 className="text-xl font-bold tracking-tight">
               {gameMode === 'mahjong' ? '3P Mahjong' : 'Lami Mahjong'}
             </h1>

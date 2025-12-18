@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { Settings, RotateCcw, Crown, Trash2, CircleHelp } from 'lucide-react';
-import { Player, GameSettings, RoundResult, WinType, PlayerBonusStats } from '../types';
-import { DEFAULT_SETTINGS, INITIAL_PLAYERS } from '../constants';
-import { calculatePayout } from '../services/scoringLogic';
-import { SettingsModal } from './SettingsModal';
-import { ScoringForm } from './ScoringForm';
-import { HistoryDetailModal } from './HistoryDetailModal';
-import { HelpModal } from './HelpModal';
+import { Player, GameSettings, RoundResult, WinType, PlayerBonusStats } from '../types.ts';
+import { DEFAULT_SETTINGS, INITIAL_PLAYERS } from '../constants.ts';
+import { calculatePayout } from '../services/scoringLogic.ts';
+import { SettingsModal } from './SettingsModal.tsx';
+import { ScoringForm } from './ScoringForm.tsx';
+import { HistoryDetailModal } from './HistoryDetailModal.tsx';
+import { HelpModal } from './HelpModal.tsx';
 
 export const MahjongGame = () => {
   const [players, setPlayers] = useState<Player[]>(INITIAL_PLAYERS);

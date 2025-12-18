@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { Settings, RotateCcw, Trash2, CircleHelp } from 'lucide-react';
-import { LamiPlayer, LamiGameSettings, LamiRoundResult, LamiRoundInput } from '../types';
-import { INITIAL_LAMI_PLAYERS, DEFAULT_LAMI_SETTINGS } from '../constants';
-import { calculateLamiPayout } from '../services/lamiLogic';
-import { LamiSettingsModal } from './LamiSettingsModal';
-import { LamiScoringForm } from './LamiScoringForm';
-import { LamiHelpModal } from './LamiHelpModal';
-import { LamiHistoryDetailModal } from './LamiHistoryDetailModal';
+import { LamiPlayer, LamiGameSettings, LamiRoundResult, LamiRoundInput } from '../types.ts';
+import { INITIAL_LAMI_PLAYERS, DEFAULT_LAMI_SETTINGS } from '../constants.ts';
+import { calculateLamiPayout } from '../services/lamiLogic.ts';
+import { LamiSettingsModal } from './LamiSettingsModal.tsx';
+import { LamiScoringForm } from './LamiScoringForm.tsx';
+import { LamiHelpModal } from './LamiHelpModal.tsx';
+import { LamiHistoryDetailModal } from './LamiHistoryDetailModal.tsx';
 
 export const LamiGame = () => {
   const [players, setPlayers] = useState<LamiPlayer[]>(INITIAL_LAMI_PLAYERS);
