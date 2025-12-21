@@ -1,12 +1,52 @@
 import React, { useState } from 'react';
 import { LamiPlayer, LamiGameSettings, LamiRoundInput } from '../types';
-import { Calculator, Check, AlertCircle } from 'lucide-react';
+import { Calculator, Check, AlertCircle, Minus, Plus } from 'lucide-react';
 
 interface Props {
   players: LamiPlayer[];
   settings: LamiGameSettings;
   onCalculate: (inputs: LamiRoundInput[], isCleared: boolean) => void;
 }
+
+const Stepper = ({ 
+  value, 
+  onChange, 
+  max, 
+  colorClass = "text-gray-900" 
+}: { 
+  value: number, 
+  onChange: (v: number) => void, 
+  max?: number, 
+  colorClass?: string 
+}) => (
+  <div className="flex items-center border border-gray-300 rounded-lg overflow-hidden h-9 w-20 bg-white shadow-sm shrink-0">
+    <button 
+      type="button" 
+      onClick={(e) => {
+        e.preventDefault();
+        onChange(Math.max(0, value - 1));
+      }}
+      className="w-7 h-full bg-gray-50 hover:bg-gray-100 flex items-center justify-center border-r border-gray-200 active:bg-gray-200 text-gray-500 transition-colors"
+    >
+      <Minus size={14} />
+    </button>
+    <div className="flex-1 h-full flex items-center justify-center bg-white relative">
+        <span className={`text-xs font-bold font-mono ${colorClass}`}>{value}</span>
+    </div>
+    <button 
+      type="button" 
+      onClick={(e) => {
+        e.preventDefault();
+        if (max !== undefined && value >= max) return;
+        onChange(value + 1);
+      }}
+      className={`w-7 h-full flex items-center justify-center border-l border-gray-200 transition-colors ${max !== undefined && value >= max ? 'bg-gray-100 text-gray-300 cursor-not-allowed' : 'bg-gray-50 hover:bg-gray-100 active:bg-gray-200 text-gray-500'}`}
+      disabled={max !== undefined && value >= max}
+    >
+      <Plus size={14} />
+    </button>
+  </div>
+);
 
 export const LamiScoringForm: React.FC<Props> = ({ players, settings, onCalculate }) => {
   const [inputs, setInputs] = useState<Record<number, LamiRoundInput>>(() => {
@@ -18,9 +58,11 @@ export const LamiScoringForm: React.FC<Props> = ({ players, settings, onCalculat
   });
   const [isCleared, setIsCleared] = useState(false);
 
+  const currentInputs = Object.values(inputs) as LamiRoundInput[];
+
   // Identify point ties to determine if suit priority selection is needed
   const pointCounts: Record<number, number> = {};
-  Object.values(inputs).forEach(input => {
+  currentInputs.forEach(input => {
     pointCounts[input.points] = (pointCounts[input.points] || 0) + 1;
   });
   const tiedPointsSet = new Set(
@@ -29,9 +71,13 @@ export const LamiScoringForm: React.FC<Props> = ({ players, settings, onCalculat
       .map(Number)
   );
 
+  // Global limits calculation
+  const totalJokers = currentInputs.reduce((sum, inp) => sum + inp.jokerCount, 0);
+  const totalAces = currentInputs.reduce((sum, inp) => sum + inp.aceCount, 0);
+
   // Group inputs by points AND priority to find TRUE ties (conflicts)
   const collisionMap: Record<string, number[]> = {};
-  Object.values(inputs).forEach(input => {
+  currentInputs.forEach(input => {
     const key = `${input.points}-${input.suitPriority}`;
     if (!collisionMap[key]) collisionMap[key] = [];
     collisionMap[key].push(input.playerId);
@@ -43,7 +89,6 @@ export const LamiScoringForm: React.FC<Props> = ({ players, settings, onCalculat
       .flat()
   );
 
-  // Helper to determine winner dynamically
   const sortedPlayers = [...players].sort((a, b) => {
     const pA = inputs[a.id]?.points || 0;
     const pB = inputs[b.id]?.points || 0;
@@ -62,9 +107,8 @@ export const LamiScoringForm: React.FC<Props> = ({ players, settings, onCalculat
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onCalculate(Object.values(inputs), isCleared);
+    onCalculate(currentInputs, isCleared);
     
-    // Reset inputs but keep player keys
     const reset: Record<number, LamiRoundInput> = {};
     players.forEach((p, idx) => {
         reset[p.id] = { playerId: p.id, points: 0, jokerCount: 0, aceCount: 0, suitPriority: idx + 1 };
@@ -79,7 +123,7 @@ export const LamiScoringForm: React.FC<Props> = ({ players, settings, onCalculat
          <span className="text-xs text-blue-500 uppercase font-bold tracking-wider">Current Projected Winner</span>
          <div className="text-lg font-bold text-blue-800 flex items-center justify-center gap-2">
             {currentWinner.name}
-            {isCleared && <span className="text-xs bg-yellow-400 text-yellow-900 px-2 rounded-full shadow-sm">Cleared Hand!</span>}
+            {isCleared && <span className="text-xs bg-yellow-400 text-yellow-900 px-2 rounded-full shadow-sm ml-1">Cleared Hand!</span>}
          </div>
          {conflictPlayerIds.size > 0 && (
            <p className="text-[10px] text-orange-500 font-bold mt-1 flex items-center justify-center gap-1 animate-pulse">
@@ -97,17 +141,16 @@ export const LamiScoringForm: React.FC<Props> = ({ players, settings, onCalculat
                 const hasConflict = conflictPlayerIds.has(p.id);
 
                 return (
-                    <div key={p.id} className={`grid grid-cols-[1fr,auto,1fr,auto,auto] gap-2 items-center p-2 rounded-lg border transition-all ${isWinner ? 'border-blue-400 bg-blue-50/50' : 'border-gray-200'} ${hasConflict ? 'border-orange-300 bg-orange-50' : ''}`}>
+                    <div key={p.id} className={`grid grid-cols-[1fr,auto] sm:grid-cols-[1.2fr,auto,1fr,auto,auto] gap-x-3 gap-y-2 items-center p-3 rounded-xl border transition-all ${isWinner ? 'border-blue-400 bg-blue-50/50 shadow-sm' : 'border-gray-100 bg-white'} ${hasConflict ? 'border-orange-300 bg-orange-50' : ''}`}>
                         <div className="min-w-0">
-                            <div className="font-bold text-sm truncate">{p.name}</div>
-                            {hasConflict && <div className="text-[9px] text-orange-500 font-bold uppercase">Conflict</div>}
+                            <div className="font-bold text-sm truncate text-gray-800">{p.name}</div>
+                            {hasConflict && <div className="text-[9px] text-orange-500 font-bold uppercase">Priority Conflict</div>}
                             {!hasConflict && isTied && <div className="text-[9px] text-blue-500 font-bold uppercase">Point Tie</div>}
                         </div>
 
-                        {/* Suit Priority Picker - Only visible when points are tied */}
-                        <div className="w-16 min-h-[40px] flex flex-col justify-center">
+                        <div className="flex flex-col items-center justify-center sm:row-auto row-start-1 col-start-2">
                             {isTied ? (
-                                <>
+                                <div className="w-16 animate-fade-in">
                                     <label className="block text-[8px] text-gray-400 uppercase text-center mb-0.5 font-bold">Suit Pri</label>
                                     <select 
                                         value={input.suitPriority}
@@ -116,47 +159,47 @@ export const LamiScoringForm: React.FC<Props> = ({ players, settings, onCalculat
                                     >
                                         {[1,2,3,4].map(n => <option key={n} value={n}>{n}</option>)}
                                     </select>
-                                </>
+                                </div>
                             ) : (
-                                <div className="w-full text-center">
+                                <div className="w-12 text-center opacity-40">
                                     <div className="text-[8px] text-gray-300 uppercase font-bold">Pri</div>
                                     <div className="text-[10px] text-gray-400 font-mono">{input.suitPriority}</div>
                                 </div>
                             )}
                         </div>
 
-                        <div>
-                            <label className="block text-[9px] text-gray-400 uppercase text-center mb-0.5 font-bold">Points</label>
+                        <div className="col-span-1">
+                            <label className="block text-[9px] text-gray-400 uppercase mb-0.5 font-bold">Points</label>
                             <input
                                 type="number"
+                                inputMode="numeric"
                                 value={input.points}
+                                onFocus={(e) => e.target.select()}
                                 onChange={e => updateInput(p.id, 'points', parseInt(e.target.value) || 0)}
-                                className="w-full border border-gray-300 bg-white rounded-lg p-1 text-center font-mono font-bold focus:ring-2 focus:ring-blue-500 outline-none"
+                                className="w-full border border-gray-300 bg-white rounded-lg p-2 text-center font-mono font-bold text-sm focus:ring-2 focus:ring-blue-500 outline-none"
                             />
                         </div>
 
                         {settings.enableJoker && (
-                            <div className="w-12">
-                                <label className="block text-[9px] text-gray-400 uppercase text-center mb-0.5 font-bold">Jok</label>
-                                <input
-                                    type="number"
-                                    min="0"
-                                    value={input.jokerCount}
-                                    onChange={e => updateInput(p.id, 'jokerCount', parseInt(e.target.value) || 0)}
-                                    className="w-full border border-gray-300 bg-white rounded-lg p-1 text-center font-mono focus:ring-2 focus:ring-blue-500 outline-none"
+                            <div className="flex flex-col items-center">
+                                <label className="block text-[9px] text-gray-400 uppercase mb-0.5 font-bold">Joker</label>
+                                <Stepper 
+                                    value={input.jokerCount} 
+                                    onChange={(v) => updateInput(p.id, 'jokerCount', v)}
+                                    max={input.jokerCount + (8 - totalJokers)}
+                                    colorClass="text-blue-600"
                                 />
                             </div>
                         )}
 
                         {settings.enableAce && (
-                            <div className="w-12">
-                                <label className="block text-[9px] text-gray-400 uppercase text-center mb-0.5 font-bold">Ace</label>
-                                <input
-                                    type="number"
-                                    min="0"
-                                    value={input.aceCount}
-                                    onChange={e => updateInput(p.id, 'aceCount', parseInt(e.target.value) || 0)}
-                                    className="w-full border border-gray-300 bg-white rounded-lg p-1 text-center font-mono focus:ring-2 focus:ring-blue-500 outline-none"
+                            <div className="flex flex-col items-center">
+                                <label className="block text-[9px] text-gray-400 uppercase mb-0.5 font-bold">Ace</label>
+                                <Stepper 
+                                    value={input.aceCount} 
+                                    onChange={(v) => updateInput(p.id, 'aceCount', v)}
+                                    max={input.aceCount + (8 - totalAces)}
+                                    colorClass="text-red-500"
                                 />
                             </div>
                         )}
@@ -165,25 +208,33 @@ export const LamiScoringForm: React.FC<Props> = ({ players, settings, onCalculat
             })}
         </div>
 
-        <button
-            type="button"
-            onClick={() => setIsCleared(!isCleared)}
-            className={`w-full py-3 rounded-xl border-2 font-bold text-sm flex items-center justify-center gap-2 transition ${
-                isCleared ? 'border-yellow-400 bg-yellow-50 text-yellow-700 shadow-inner' : 'border-gray-200 text-gray-400 hover:bg-gray-50'
-            }`}
-        >
-            <Check size={18} className={isCleared ? 'opacity-100' : 'opacity-0'} />
-            Winner Cleared Hand (Complete Set)
-        </button>
+        <div className="flex flex-col gap-2 pt-2">
+            {(totalJokers >= 8 || totalAces >= 8) && (
+                <div className="text-[10px] text-orange-600 text-center font-bold flex items-center justify-center gap-1 mb-1 bg-orange-50 py-1 rounded">
+                    <AlertCircle size={10} /> Limit: Max 8 Jokers & 8 Aces per game
+                </div>
+            )}
+            
+            <button
+                type="button"
+                onClick={() => setIsCleared(!isCleared)}
+                className={`w-full py-3 rounded-xl border-2 font-bold text-sm flex items-center justify-center gap-2 transition ${
+                    isCleared ? 'border-yellow-400 bg-yellow-50 text-yellow-700 shadow-inner' : 'border-gray-200 text-gray-400 hover:bg-gray-50'
+                }`}
+            >
+                <Check size={18} className={isCleared ? 'opacity-100' : 'opacity-0'} />
+                Winner Cleared Hand
+            </button>
 
-        <button
-          type="submit"
-          className="w-full bg-blue-600 text-white py-4 rounded-xl font-bold text-lg shadow-lg active:scale-[0.98] transition flex items-center justify-center gap-2 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-          disabled={conflictPlayerIds.size > 0}
-        >
-          <Calculator size={20} />
-          Calculate Round
-        </button>
+            <button
+              type="submit"
+              className="w-full bg-blue-600 text-white py-4 rounded-xl font-bold text-lg shadow-lg active:scale-[0.98] transition flex items-center justify-center gap-2 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={conflictPlayerIds.size > 0}
+            >
+              <Calculator size={20} />
+              Calculate Round
+            </button>
+        </div>
       </form>
     </div>
   );

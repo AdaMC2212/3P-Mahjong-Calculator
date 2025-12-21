@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { Settings, RotateCcw, Trash2, CircleHelp } from 'lucide-react';
-import { LamiPlayer, LamiGameSettings, LamiRoundResult, LamiRoundInput } from '../types.ts';
-import { INITIAL_LAMI_PLAYERS, DEFAULT_LAMI_SETTINGS } from '../constants.ts';
-import { calculateLamiPayout } from '../services/lamiLogic.ts';
-import { LamiSettingsModal } from './LamiSettingsModal.tsx';
-import { LamiScoringForm } from './LamiScoringForm.tsx';
-import { LamiHelpModal } from './LamiHelpModal.tsx';
-import { LamiHistoryDetailModal } from './LamiHistoryDetailModal.tsx';
+import { LamiPlayer, LamiGameSettings, LamiRoundResult, LamiRoundInput } from '../types';
+import { INITIAL_LAMI_PLAYERS, DEFAULT_LAMI_SETTINGS } from '../constants';
+import { calculateLamiPayout } from '../services/lamiLogic';
+import { LamiSettingsModal } from './LamiSettingsModal';
+import { LamiScoringForm } from './LamiScoringForm';
+import { LamiHelpModal } from './LamiHelpModal';
+import { LamiHistoryDetailModal } from './LamiHistoryDetailModal';
 
 export const LamiGame = () => {
   const [players, setPlayers] = useState<LamiPlayer[]>(INITIAL_LAMI_PLAYERS);
@@ -19,7 +19,6 @@ export const LamiGame = () => {
   const handleCalculate = (inputs: LamiRoundInput[], isCleared: boolean) => {
     const result = calculateLamiPayout(inputs, isCleared, settings, players);
     
-    // Update balances
     setPlayers(prev => prev.map(p => {
         const tx = result.transactions.find(t => t.playerId === p.id);
         return tx ? { ...p, score: p.score + tx.totalAmount } : p;
@@ -34,11 +33,9 @@ export const LamiGame = () => {
   };
 
   const deleteRound = (roundId: number) => {
-    // Find the round in the current history
     const roundToDelete = history.find(h => h.id === roundId);
     if (!roundToDelete) return;
 
-    // Revert scores
     setPlayers(prevPlayers => prevPlayers.map(p => {
         const tx = roundToDelete.transactions.find(t => t.playerId === p.id);
         if (tx) {
@@ -47,7 +44,6 @@ export const LamiGame = () => {
         return p;
     }));
 
-    // Remove from history
     setHistory(prevHistory => prevHistory.filter(h => h.id !== roundId));
   };
 
@@ -65,7 +61,6 @@ export const LamiGame = () => {
          </button>
       </div>
 
-      {/* Scoreboard */}
       <div className="bg-white rounded-xl shadow-sm p-4 border border-gray-100 relative z-0">
         <div className="grid grid-cols-4 gap-2 text-center divide-x divide-gray-100">
            {players.map(p => (
@@ -85,7 +80,6 @@ export const LamiGame = () => {
          onCalculate={handleCalculate}
       />
 
-      {/* History */}
       <div className="space-y-4">
          <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider px-2">History</h3>
          {history.length === 0 && <p className="text-center text-gray-300 py-4 text-xs italic">No rounds played yet</p>}

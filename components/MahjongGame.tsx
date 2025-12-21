@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { Settings, RotateCcw, Crown, Trash2, CircleHelp } from 'lucide-react';
-import { Player, GameSettings, RoundResult, WinType, PlayerBonusStats } from '../types.ts';
-import { DEFAULT_SETTINGS, INITIAL_PLAYERS } from '../constants.ts';
-import { calculatePayout } from '../services/scoringLogic.ts';
-import { SettingsModal } from './SettingsModal.tsx';
-import { ScoringForm } from './ScoringForm.tsx';
-import { HistoryDetailModal } from './HistoryDetailModal.tsx';
-import { HelpModal } from './HelpModal.tsx';
+import { Player, GameSettings, RoundResult, WinType, PlayerBonusStats } from '../types';
+import { DEFAULT_SETTINGS, INITIAL_PLAYERS } from '../constants';
+import { calculatePayout } from '../services/scoringLogic';
+import { SettingsModal } from './SettingsModal';
+import { ScoringForm } from './ScoringForm';
+import { HistoryDetailModal } from './HistoryDetailModal';
+import { HelpModal } from './HelpModal';
 
 export const MahjongGame = () => {
   const [players, setPlayers] = useState<Player[]>(INITIAL_PLAYERS);
@@ -51,7 +51,6 @@ export const MahjongGame = () => {
     const roundToDelete = history.find(h => h.timestamp === timestamp);
     if (!roundToDelete) return;
 
-    // Rollback scores
     setPlayers(prevPlayers => prevPlayers.map(p => {
       const tx = roundToDelete.transactions.find(t => t.playerId === p.id);
       if (tx) {
@@ -60,7 +59,6 @@ export const MahjongGame = () => {
       return p;
     }));
 
-    // Remove from history and update last result
     setHistory(prevHistory => {
         const newHistory = prevHistory.filter(h => h.timestamp !== timestamp);
         if (lastResult?.timestamp === timestamp) {
@@ -115,7 +113,6 @@ export const MahjongGame = () => {
             </button>
        </div>
 
-        {/* Scoreboard */}
         <div className="bg-white rounded-xl shadow-sm p-4 border border-gray-100 relative z-0">
           <div className="grid grid-cols-3 gap-2 text-center divide-x divide-gray-100">
             {players.map(p => {
