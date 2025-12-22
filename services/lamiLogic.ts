@@ -25,8 +25,6 @@ export const calculateLamiPayout = (
   inputs.forEach(i => ledger.set(i.playerId, { main: 0, joker: 0, ace: 0 }));
 
   // --- 2. Main Settlement ---
-  // If winner clears hand, every loser pays the FIXED PRICE.
-  // Otherwise, they pay based on their Rank.
   let pays: [number, number, number];
   if (isCleared) {
     pays = [clearHandFixedPrice, clearHandFixedPrice, clearHandFixedPrice];
@@ -34,7 +32,6 @@ export const calculateLamiPayout = (
     pays = [...basePayTable];
   }
 
-  // Apply Main Transactions (Losers pay Winner)
   const applyMainPayment = (payerId: number, amount: number) => {
     const payer = ledger.get(payerId)!;
     const winnerL = ledger.get(winner.playerId)!;
@@ -79,7 +76,11 @@ export const calculateLamiPayout = (
         const pA = inputs[i];
         const pB = inputs[j];
         
-        const diff = pA.aceCount - pB.aceCount;
+        // Calculate effective value for doubling rule
+        const valueA = pA.aceCount * (pA.hasFullAceSuits ? 2 : 1);
+        const valueB = pB.aceCount * (pB.hasFullAceSuits ? 2 : 1);
+        
+        const diff = valueA - valueB;
         const amount = Math.abs(diff) * aceUnitValue;
 
         if (amount > 0) {

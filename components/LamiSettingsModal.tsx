@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { LamiGameSettings, LamiPlayer } from '../types';
 import { X, Users, DollarSign, Wand2, Sparkles } from 'lucide-react';
@@ -35,7 +34,7 @@ export const LamiSettingsModal: React.FC<Props> = ({
   };
 
   const handlePayTableChange = (index: number, val: string) => {
-    const num = parseFloat(val) || 0;
+    const num = Math.max(0, parseFloat(val) || 0);
     const newTable = [...localSettings.basePayTable] as [number, number, number];
     newTable[index] = num;
     setLocalSettings({ ...localSettings, basePayTable: newTable });
@@ -88,6 +87,7 @@ export const LamiSettingsModal: React.FC<Props> = ({
                   <label className="text-[10px] font-bold text-gray-400 uppercase block mb-1">Rank 2 Pays</label>
                   <input 
                     type="number" 
+                    min="0"
                     value={localSettings.basePayTable[0]}
                     onChange={(e) => handlePayTableChange(0, e.target.value)}
                     className="w-full border border-gray-300 rounded-lg p-2 text-center font-mono bg-white text-gray-900"
@@ -97,6 +97,7 @@ export const LamiSettingsModal: React.FC<Props> = ({
                   <label className="text-[10px] font-bold text-gray-400 uppercase block mb-1">Rank 3 Pays</label>
                   <input 
                     type="number" 
+                    min="0"
                     value={localSettings.basePayTable[1]}
                     onChange={(e) => handlePayTableChange(1, e.target.value)}
                     className="w-full border border-gray-300 rounded-lg p-2 text-center font-mono bg-white text-gray-900"
@@ -106,6 +107,7 @@ export const LamiSettingsModal: React.FC<Props> = ({
                   <label className="text-[10px] font-bold text-gray-400 uppercase block mb-1">Rank 4 Pays</label>
                   <input 
                     type="number" 
+                    min="0"
                     value={localSettings.basePayTable[2]}
                     onChange={(e) => handlePayTableChange(2, e.target.value)}
                     className="w-full border border-gray-300 rounded-lg p-2 text-center font-mono bg-white text-gray-900"
@@ -123,8 +125,9 @@ export const LamiSettingsModal: React.FC<Props> = ({
                 <label className="block text-xs font-medium text-yellow-700 mb-1">Losers pay this fixed amount if Winner clears hand</label>
                 <input 
                     type="number" 
+                    min="0"
                     value={localSettings.clearHandFixedPrice}
-                    onChange={(e) => setLocalSettings({ ...localSettings, clearHandFixedPrice: parseFloat(e.target.value) || 0 })}
+                    onChange={(e) => setLocalSettings({ ...localSettings, clearHandFixedPrice: Math.max(0, parseFloat(e.target.value) || 0) })}
                     className="w-full border border-yellow-300 rounded-lg p-3 text-center font-mono font-bold text-lg bg-white text-yellow-900 focus:ring-2 focus:ring-yellow-500 outline-none"
                     placeholder="e.g. 5"
                 />
@@ -151,8 +154,9 @@ export const LamiSettingsModal: React.FC<Props> = ({
                 <div className="flex items-center gap-2">
                     <input 
                        type="number"
+                       min="0"
                        value={localSettings.jokerUnitValue}
-                       onChange={(e) => setLocalSettings({...localSettings, jokerUnitValue: parseFloat(e.target.value) || 0})}
+                       onChange={(e) => setLocalSettings({...localSettings, jokerUnitValue: Math.max(0, parseFloat(e.target.value) || 0)})}
                        className="w-16 border border-gray-300 rounded p-1 text-center text-sm bg-white text-gray-900"
                     />
                     <Toggle 
@@ -173,8 +177,9 @@ export const LamiSettingsModal: React.FC<Props> = ({
                 <div className="flex items-center gap-2">
                     <input 
                        type="number"
+                       min="0"
                        value={localSettings.aceUnitValue}
-                       onChange={(e) => setLocalSettings({...localSettings, aceUnitValue: parseFloat(e.target.value) || 0})}
+                       onChange={(e) => setLocalSettings({...localSettings, aceUnitValue: Math.max(0, parseFloat(e.target.value) || 0)})}
                        className="w-16 border border-gray-300 rounded p-1 text-center text-sm bg-white text-gray-900"
                     />
                     <Toggle 

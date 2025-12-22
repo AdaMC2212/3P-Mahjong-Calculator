@@ -33,12 +33,12 @@ export const SettingsModal: React.FC<Props> = ({
   if (!isOpen) return null;
 
   const handleSave = () => {
-    // Parse the input string back to number on save
-    const parsedBaseValue = parseFloat(baseValueInput);
+    // Parse the input string back to number on save and ensure non-negative
+    const parsedBaseValue = Math.max(0, parseFloat(baseValueInput) || 0);
     
     onSave({
       ...localSettings,
-      baseValue: isNaN(parsedBaseValue) ? 0 : parsedBaseValue
+      baseValue: parsedBaseValue
     });
     onUpdatePlayers(localPlayers);
     onClose();
@@ -105,9 +105,8 @@ export const SettingsModal: React.FC<Props> = ({
                   value={baseValueInput}
                   onChange={(e) => setBaseValueInput(e.target.value)}
                   onBlur={() => {
-                    // Optional: format on blur if needed, or leave as is
-                    const val = parseFloat(baseValueInput);
-                    if (!isNaN(val)) setBaseValueInput(val.toString());
+                    const val = Math.max(0, parseFloat(baseValueInput) || 0);
+                    setBaseValueInput(val.toString());
                   }}
                   className="w-full border border-gray-300 rounded-lg pl-10 p-3 text-lg font-mono focus:ring-2 focus:ring-mj-table outline-none bg-white text-gray-900"
                   placeholder="0.00"
@@ -124,8 +123,9 @@ export const SettingsModal: React.FC<Props> = ({
               <div className="flex items-center gap-4">
                  <input
                   type="number"
+                  min="0"
                   value={localSettings.burstFan}
-                  onChange={(e) => setLocalSettings({ ...localSettings, burstFan: parseInt(e.target.value) || 0 })}
+                  onChange={(e) => setLocalSettings({ ...localSettings, burstFan: Math.max(0, parseInt(e.target.value) || 0) })}
                   className="w-24 border border-gray-300 rounded-lg p-3 text-lg font-mono text-center focus:ring-2 focus:ring-mj-table outline-none bg-white text-gray-900"
                 />
                 <p className="text-xs text-gray-500 flex-1">

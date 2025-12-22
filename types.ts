@@ -73,6 +73,7 @@ export interface LamiRoundInput {
   points: number;
   jokerCount: number;
   aceCount: number;
+  hasFullAceSuits: boolean; // New: If true, Ace payout is doubled
   suitPriority: number; // 1 (Highest) to 4 (Lowest)
 }
 

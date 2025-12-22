@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { LamiPlayer, LamiGameSettings, LamiRoundInput } from '../types';
-import { Calculator, Check, AlertCircle, Minus, Plus } from 'lucide-react';
+import { Calculator, Check, AlertCircle, Minus, Plus, Sparkles } from 'lucide-react';
 
 interface Props {
   players: LamiPlayer[];
@@ -52,7 +52,7 @@ export const LamiScoringForm: React.FC<Props> = ({ players, settings, onCalculat
   const [inputs, setInputs] = useState<Record<number, LamiRoundInput>>(() => {
     const init: Record<number, LamiRoundInput> = {};
     players.forEach((p, idx) => {
-        init[p.id] = { playerId: p.id, points: 0, jokerCount: 0, aceCount: 0, suitPriority: idx + 1 };
+        init[p.id] = { playerId: p.id, points: 0, jokerCount: 0, aceCount: 0, hasFullAceSuits: false, suitPriority: idx + 1 };
     });
     return init;
   });
@@ -60,7 +60,7 @@ export const LamiScoringForm: React.FC<Props> = ({ players, settings, onCalculat
 
   const currentInputs = Object.values(inputs) as LamiRoundInput[];
 
-  // Identify point ties to determine if suit priority selection is needed
+  // Identify point ties
   const pointCounts: Record<number, number> = {};
   currentInputs.forEach(input => {
     pointCounts[input.points] = (pointCounts[input.points] || 0) + 1;
@@ -75,7 +75,7 @@ export const LamiScoringForm: React.FC<Props> = ({ players, settings, onCalculat
   const totalJokers = currentInputs.reduce((sum, inp) => sum + inp.jokerCount, 0);
   const totalAces = currentInputs.reduce((sum, inp) => sum + inp.aceCount, 0);
 
-  // Group inputs by points AND priority to find TRUE ties (conflicts)
+  // Priority conflicts
   const collisionMap: Record<string, number[]> = {};
   currentInputs.forEach(input => {
     const key = `${input.points}-${input.suitPriority}`;
@@ -98,10 +98,15 @@ export const LamiScoringForm: React.FC<Props> = ({ players, settings, onCalculat
 
   const currentWinner = sortedPlayers[0];
 
-  const updateInput = (pid: number, field: keyof LamiRoundInput, value: number) => {
+  const updateInput = (pid: number, field: keyof LamiRoundInput, value: any) => {
     setInputs(prev => ({
         ...prev,
-        [pid]: { ...prev[pid], [field]: value }
+        [pid]: { 
+            ...prev[pid], 
+            [field]: value,
+            // Reset "hasFullAceSuits" if ace count drops below 4
+            ...(field === 'aceCount' && value < 4 ? { hasFullAceSuits: false } : {})
+        }
     }));
   };
 
@@ -111,7 +116,7 @@ export const LamiScoringForm: React.FC<Props> = ({ players, settings, onCalculat
     
     const reset: Record<number, LamiRoundInput> = {};
     players.forEach((p, idx) => {
-        reset[p.id] = { playerId: p.id, points: 0, jokerCount: 0, aceCount: 0, suitPriority: idx + 1 };
+        reset[p.id] = { playerId: p.id, points: 0, jokerCount: 0, aceCount: 0, hasFullAceSuits: false, suitPriority: idx + 1 };
     });
     setInputs(reset);
     setIsCleared(false);
@@ -123,11 +128,11 @@ export const LamiScoringForm: React.FC<Props> = ({ players, settings, onCalculat
          <span className="text-xs text-blue-500 uppercase font-bold tracking-wider">Current Projected Winner</span>
          <div className="text-lg font-bold text-blue-800 flex items-center justify-center gap-2">
             {currentWinner.name}
-            {isCleared && <span className="text-xs bg-yellow-400 text-yellow-900 px-2 rounded-full shadow-sm ml-1">Cleared Hand!</span>}
+            {isCleared && <span className="text-xs bg-yellow-400 text-yellow-900 px-2 rounded-full shadow-sm ml-1 animate-pulse">Cleared Hand!</span>}
          </div>
          {conflictPlayerIds.size > 0 && (
-           <p className="text-[10px] text-orange-500 font-bold mt-1 flex items-center justify-center gap-1 animate-pulse">
-             <AlertCircle size={10} /> Duplicate Priority detected! Change Suit Pri.
+           <p className="text-[10px] text-orange-500 font-bold mt-1 flex items-center justify-center gap-1 animate-bounce">
+             <AlertCircle size={10} /> Duplicate Priority detected!
            </p>
          )}
       </div>
@@ -141,66 +146,95 @@ export const LamiScoringForm: React.FC<Props> = ({ players, settings, onCalculat
                 const hasConflict = conflictPlayerIds.has(p.id);
 
                 return (
-                    <div key={p.id} className={`grid grid-cols-[1fr,auto] sm:grid-cols-[1.2fr,auto,1fr,auto,auto] gap-x-3 gap-y-2 items-center p-3 rounded-xl border transition-all ${isWinner ? 'border-blue-400 bg-blue-50/50 shadow-sm' : 'border-gray-100 bg-white'} ${hasConflict ? 'border-orange-300 bg-orange-50' : ''}`}>
-                        <div className="min-w-0">
-                            <div className="font-bold text-sm truncate text-gray-800">{p.name}</div>
-                            {hasConflict && <div className="text-[9px] text-orange-500 font-bold uppercase">Priority Conflict</div>}
-                            {!hasConflict && isTied && <div className="text-[9px] text-blue-500 font-bold uppercase">Point Tie</div>}
+                    <div key={p.id} className={`flex flex-col gap-3 p-3 rounded-xl border transition-all ${isWinner ? 'border-blue-400 bg-blue-50/50 shadow-sm' : 'border-gray-100 bg-white'} ${hasConflict ? 'border-orange-300 bg-orange-50' : ''}`}>
+                        {/* Header: Player Name & Suit Priority */}
+                        <div className="flex justify-between items-center">
+                            <div className="min-w-0">
+                                <div className="font-bold text-sm truncate text-gray-800 flex items-center gap-2">
+                                    {p.name}
+                                    {input.hasFullAceSuits && <Sparkles size={12} className="text-orange-500" />}
+                                </div>
+                                {hasConflict && <div className="text-[8px] text-orange-500 font-bold uppercase">Priority Conflict</div>}
+                                {!hasConflict && isTied && <div className="text-[8px] text-blue-500 font-bold uppercase">Point Tie</div>}
+                            </div>
+
+                            <div className="flex items-center gap-2">
+                                {isTied ? (
+                                    <div className="w-20">
+                                        <div className="flex items-center gap-1 border border-blue-200 rounded-lg p-1 bg-white">
+                                            <span className="text-[8px] text-blue-400 font-bold uppercase shrink-0">Suit Pri</span>
+                                            <select 
+                                                value={input.suitPriority}
+                                                onChange={(e) => updateInput(p.id, 'suitPriority', parseInt(e.target.value))}
+                                                className="w-full text-center text-xs font-bold outline-none bg-transparent"
+                                            >
+                                                {[1,2,3,4].map(n => <option key={n} value={n}>{n}</option>)}
+                                            </select>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="text-[8px] text-gray-300 uppercase font-bold border border-gray-100 rounded px-1.5 py-0.5">
+                                        Pri {input.suitPriority}
+                                    </div>
+                                )}
+                            </div>
                         </div>
 
-                        <div className="flex flex-col items-center justify-center sm:row-auto row-start-1 col-start-2">
-                            {isTied ? (
-                                <div className="w-16 animate-fade-in">
-                                    <label className="block text-[8px] text-gray-400 uppercase text-center mb-0.5 font-bold">Suit Pri</label>
-                                    <select 
-                                        value={input.suitPriority}
-                                        onChange={(e) => updateInput(p.id, 'suitPriority', parseInt(e.target.value))}
-                                        className={`w-full border bg-white rounded-lg p-1 text-center text-[10px] font-bold focus:ring-2 focus:ring-blue-500 outline-none ${hasConflict ? 'border-orange-500 text-orange-600' : 'border-gray-300'}`}
-                                    >
-                                        {[1,2,3,4].map(n => <option key={n} value={n}>{n}</option>)}
-                                    </select>
+                        {/* Controls Row: Balanced Layout */}
+                        <div className="grid grid-cols-[1fr,auto,auto] gap-2 items-end">
+                            <div className="min-w-0">
+                                <label className="block text-[9px] text-gray-400 uppercase mb-0.5 font-bold">Points</label>
+                                <input
+                                    type="number"
+                                    inputMode="numeric"
+                                    min="0"
+                                    value={input.points}
+                                    onFocus={(e) => e.target.select()}
+                                    onChange={e => updateInput(p.id, 'points', Math.max(0, parseInt(e.target.value) || 0))}
+                                    className="w-full border border-gray-300 bg-white rounded-lg p-2 text-center font-mono font-bold text-sm focus:ring-2 focus:ring-blue-500 outline-none h-9"
+                                />
+                            </div>
+
+                            {settings.enableJoker && (
+                                <div className="flex flex-col items-center">
+                                    <label className="block text-[9px] text-gray-400 uppercase mb-0.5 font-bold">Joker</label>
+                                    <Stepper 
+                                        value={input.jokerCount} 
+                                        onChange={(v) => updateInput(p.id, 'jokerCount', v)}
+                                        max={input.jokerCount + (8 - totalJokers)}
+                                        colorClass="text-blue-600"
+                                    />
                                 </div>
-                            ) : (
-                                <div className="w-12 text-center opacity-40">
-                                    <div className="text-[8px] text-gray-300 uppercase font-bold">Pri</div>
-                                    <div className="text-[10px] text-gray-400 font-mono">{input.suitPriority}</div>
+                            )}
+
+                            {settings.enableAce && (
+                                <div className="flex flex-col items-center">
+                                    <label className="block text-[9px] text-gray-400 uppercase mb-0.5 font-bold">Ace</label>
+                                    <Stepper 
+                                        value={input.aceCount} 
+                                        onChange={(v) => updateInput(p.id, 'aceCount', v)}
+                                        max={input.aceCount + (8 - totalAces)}
+                                        colorClass="text-red-500"
+                                    />
                                 </div>
                             )}
                         </div>
 
-                        <div className="col-span-1">
-                            <label className="block text-[9px] text-gray-400 uppercase mb-0.5 font-bold">Points</label>
-                            <input
-                                type="number"
-                                inputMode="numeric"
-                                value={input.points}
-                                onFocus={(e) => e.target.select()}
-                                onChange={e => updateInput(p.id, 'points', parseInt(e.target.value) || 0)}
-                                className="w-full border border-gray-300 bg-white rounded-lg p-2 text-center font-mono font-bold text-sm focus:ring-2 focus:ring-blue-500 outline-none"
-                            />
-                        </div>
-
-                        {settings.enableJoker && (
-                            <div className="flex flex-col items-center">
-                                <label className="block text-[9px] text-gray-400 uppercase mb-0.5 font-bold">Joker</label>
-                                <Stepper 
-                                    value={input.jokerCount} 
-                                    onChange={(v) => updateInput(p.id, 'jokerCount', v)}
-                                    max={input.jokerCount + (8 - totalJokers)}
-                                    colorClass="text-blue-600"
-                                />
-                            </div>
-                        )}
-
-                        {settings.enableAce && (
-                            <div className="flex flex-col items-center">
-                                <label className="block text-[9px] text-gray-400 uppercase mb-0.5 font-bold">Ace</label>
-                                <Stepper 
-                                    value={input.aceCount} 
-                                    onChange={(v) => updateInput(p.id, 'aceCount', v)}
-                                    max={input.aceCount + (8 - totalAces)}
-                                    colorClass="text-red-500"
-                                />
+                        {/* Special Options: All 4 suits doubling (Appears at 4 or more Aces) */}
+                        {input.aceCount >= 4 && (
+                            <div className="animate-fade-in-up">
+                                <button
+                                    type="button"
+                                    onClick={() => updateInput(p.id, 'hasFullAceSuits', !input.hasFullAceSuits)}
+                                    className={`w-full py-1.5 rounded-lg border flex items-center justify-center gap-2 text-[10px] font-bold transition-all shadow-sm ${
+                                        input.hasFullAceSuits 
+                                        ? 'bg-orange-500 border-orange-600 text-white' 
+                                        : 'bg-orange-50 border-orange-200 text-orange-700'
+                                    }`}
+                                >
+                                    <Sparkles size={12} />
+                                    {input.hasFullAceSuits ? 'Bonus: All 4 Suits Active (x2)' : 'Confirm All 4 Suits?'}
+                                </button>
                             </div>
                         )}
                     </div>
