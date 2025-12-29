@@ -21,7 +21,9 @@ export enum WinType {
 
 export interface PlayerBonusStats {
   fei: number;
-  kong: number;
+  selfKongs: number;
+  // Map of DiscarderId -> Count of Kongs they discarded to this player
+  discardedKongs: Record<number, number>;
 }
 
 export interface RoundResult {
@@ -31,18 +33,28 @@ export interface RoundResult {
   fan: number;
   isBurst: boolean;
   playerStats: Record<number, PlayerBonusStats>;
+  loserSettlement?: {
+    player1Id: number;
+    player1Fan: number;
+    player2Id: number;
+    player2Fan: number;
+    amount: number; // Amount exchanged between losers
+    fromId: number;
+    toId: number;
+  };
   breakdown: {
     baseHandMoney: number;
     burstMultiplier: number;
-    handFullPrice: number; // The generic full price of the hand (fan only)
-    handHalfPrice: number; // The half price of the hand
-    unitBonusValue: number; // The value of one Fei or Kong (Base * 2)
+    handFullPrice: number; 
+    handHalfPrice: number; 
+    unitBonusValue: number; // The value of one Fei or Self-Kong (Base * 2)
   };
   transactions: {
     playerId: number;
     amount: number;
     handAmount: number; // Portion from hand win
     bonusAmount: number; // Portion from Fei/Kong
+    loserSettlementAmount: number; // Portion from loser-to-loser settlement
   }[];
   timestamp: number;
 }
