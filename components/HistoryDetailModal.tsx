@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { X, Trophy, AlertTriangle, ArrowRight, Zap, Layers, Target } from 'lucide-react';
+import { X, Target } from 'lucide-react';
 import { RoundResult, Player, WinType } from '../types';
 
 interface Props {

@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, Trophy, AlertTriangle, ArrowRight, Zap, Layers, Spade } from 'lucide-react';
+import { X, Trophy } from 'lucide-react';
 import { LamiRoundResult, LamiPlayer } from '../types.ts';
 
 interface Props {

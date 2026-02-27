@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { X, BookOpen, Trophy, Swords, Zap, Spade } from 'lucide-react';
+import { X, BookOpen, Trophy, Swords, Spade } from 'lucide-react';
 
 interface Props {
   isOpen: boolean;

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Player, WinType, GameSettings, HandAnalysis, PlayerBonusStats } from '../types';
-import { Camera, Calculator, Loader2, Plus, Minus, Hand, UserX, Target, Zap, Layers } from 'lucide-react';
+import { Camera, Calculator, Loader2, Plus, Minus, Hand, UserX, Target, Layers } from 'lucide-react';
 import { CameraCapture } from './CameraCapture';
 import { analyzeHandImage } from '../services/geminiService';
 
@@ -52,6 +52,18 @@ const Stepper = ({ value, onChange, max, colorClass = "text-gray-900", label }: 
   </div>
 );
 
+const createInitialRoundState = (players: Player[]) => {
+  const playerStats: Record<number, PlayerBonusStats> = {};
+  const loserFans: Record<number, number> = {};
+
+  players.forEach((player) => {
+    playerStats[player.id] = { fei: 0, selfKongs: 0, discardedKongs: {} };
+    loserFans[player.id] = 0;
+  });
+
+  return { playerStats, loserFans };
+};
+
 export const ScoringForm: React.FC<Props> = ({ players, settings, dealerId, onCalculate, getWind }) => {
   const [winnerId, setWinnerId] = useState<number>(dealerId);
   const [winType, setWinType] = useState<WinType>(WinType.ZIMO);
@@ -67,14 +79,9 @@ export const ScoringForm: React.FC<Props> = ({ players, settings, dealerId, onCa
   const [formError, setFormError] = useState<string>('');
 
   useEffect(() => {
-    const initialStats: Record<number, PlayerBonusStats> = {};
-    const initialLoserFans: Record<number, number> = {};
-    players.forEach(p => {
-      initialStats[p.id] = { fei: 0, selfKongs: 0, discardedKongs: {} };
-      initialLoserFans[p.id] = 0;
-    });
-    setAllPlayerStats(initialStats);
-    setLoserFans(initialLoserFans);
+    const { playerStats, loserFans } = createInitialRoundState(players);
+    setAllPlayerStats(playerStats);
+    setLoserFans(loserFans);
   }, [players]);
 
   useEffect(() => {
@@ -140,13 +147,8 @@ export const ScoringForm: React.FC<Props> = ({ players, settings, dealerId, onCa
     
     setFan(5);
     setAnalysisReason('');
-    const resetStats: Record<number, PlayerBonusStats> = {};
-    const resetLoserFans: Record<number, number> = {};
-    players.forEach(p => {
-        resetStats[p.id] = { fei: 0, selfKongs: 0, discardedKongs: {} };
-        resetLoserFans[p.id] = 0;
-    });
-    setAllPlayerStats(resetStats);
+    const { playerStats, loserFans: resetLoserFans } = createInitialRoundState(players);
+    setAllPlayerStats(playerStats);
     setLoserFans(resetLoserFans);
     setFormError('');
   };
@@ -279,8 +281,6 @@ export const ScoringForm: React.FC<Props> = ({ players, settings, dealerId, onCa
               {players.map(p => {
                   const stats = allPlayerStats[p.id] || { fei: 0, selfKongs: 0, discardedKongs: {} };
                   const wind = getWind(p.id);
-                  // Fixed potential TypeScript error by casting Object.values results to number[] to avoid 'unknown' type in comparison
-                  const hasAnyDiscardedKongs = (Object.values(stats.discardedKongs) as number[]).some(c => c > 0);
                   
                   return (
                       <div key={p.id} className="space-y-4 p-5 bg-white border border-gray-100 rounded-3xl shadow-sm">

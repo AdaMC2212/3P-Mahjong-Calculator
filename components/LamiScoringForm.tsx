@@ -8,6 +8,21 @@ interface Props {
   onCalculate: (inputs: LamiRoundInput[], isCleared: boolean) => void;
 }
 
+const createInitialInputs = (players: LamiPlayer[]): Record<number, LamiRoundInput> => {
+  const initialInputs: Record<number, LamiRoundInput> = {};
+  players.forEach((player, index) => {
+    initialInputs[player.id] = {
+      playerId: player.id,
+      points: 0,
+      jokerCount: 0,
+      aceCount: 0,
+      hasFullAceSuits: false,
+      suitPriority: index + 1
+    };
+  });
+  return initialInputs;
+};
+
 const Stepper = ({ 
   value, 
   onChange, 
@@ -49,13 +64,7 @@ const Stepper = ({
 );
 
 export const LamiScoringForm: React.FC<Props> = ({ players, settings, onCalculate }) => {
-  const [inputs, setInputs] = useState<Record<number, LamiRoundInput>>(() => {
-    const init: Record<number, LamiRoundInput> = {};
-    players.forEach((p, idx) => {
-        init[p.id] = { playerId: p.id, points: 0, jokerCount: 0, aceCount: 0, hasFullAceSuits: false, suitPriority: idx + 1 };
-    });
-    return init;
-  });
+  const [inputs, setInputs] = useState<Record<number, LamiRoundInput>>(() => createInitialInputs(players));
   const [isCleared, setIsCleared] = useState(false);
 
   const currentInputs = Object.values(inputs) as LamiRoundInput[];
@@ -113,12 +122,8 @@ export const LamiScoringForm: React.FC<Props> = ({ players, settings, onCalculat
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onCalculate(currentInputs, isCleared);
-    
-    const reset: Record<number, LamiRoundInput> = {};
-    players.forEach((p, idx) => {
-        reset[p.id] = { playerId: p.id, points: 0, jokerCount: 0, aceCount: 0, hasFullAceSuits: false, suitPriority: idx + 1 };
-    });
-    setInputs(reset);
+
+    setInputs(createInitialInputs(players));
     setIsCleared(false);
   };
 
