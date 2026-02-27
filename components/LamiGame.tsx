@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Settings, RotateCcw, Trash2, CircleHelp } from 'lucide-react';
+import { Settings, RotateCcw, Trash2, CircleHelp, BarChart3 } from 'lucide-react';
 import { LamiPlayer, LamiGameSettings, LamiRoundResult, LamiRoundInput } from '../types';
 import { INITIAL_LAMI_PLAYERS, DEFAULT_LAMI_SETTINGS } from '../constants';
 import { calculateLamiPayout } from '../services/lamiLogic';
@@ -7,6 +7,7 @@ import { LamiSettingsModal } from './LamiSettingsModal';
 import { LamiScoringForm } from './LamiScoringForm';
 import { LamiHelpModal } from './LamiHelpModal';
 import { LamiHistoryDetailModal } from './LamiHistoryDetailModal';
+import { LamiReportModal } from './LamiReportModal';
 
 export const LamiGame = () => {
   const [players, setPlayers] = useState<LamiPlayer[]>(INITIAL_LAMI_PLAYERS);
@@ -14,6 +15,7 @@ export const LamiGame = () => {
   const [history, setHistory] = useState<LamiRoundResult[]>([]);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isHelpOpen, setIsHelpOpen] = useState(false);
+  const [isReportOpen, setIsReportOpen] = useState(false);
   const [viewingResult, setViewingResult] = useState<LamiRoundResult | null>(null);
 
   const handleCalculate = (inputs: LamiRoundInput[], isCleared: boolean) => {
@@ -53,6 +55,9 @@ export const LamiGame = () => {
          <button onClick={resetGame} className="p-2 text-gray-500 hover:bg-gray-100 rounded-full transition active:scale-95" title="Reset Scores">
             <RotateCcw size={20} />
          </button>
+         <button onClick={() => setIsReportOpen(true)} className="p-2 text-gray-500 hover:bg-gray-100 rounded-full transition active:scale-95" title="Round Report">
+            <BarChart3 size={20} />
+         </button>
          <button onClick={() => setIsHelpOpen(true)} className="p-2 text-gray-500 hover:bg-gray-100 rounded-full transition active:scale-95" title="Help">
             <CircleHelp size={20} />
          </button>
@@ -71,6 +76,10 @@ export const LamiGame = () => {
                  </div>
               </div>
            ))}
+        </div>
+        <div className="mt-4 pt-3 border-t border-gray-100 text-center">
+          <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Total Rounds Played</span>
+          <div className="text-xl font-mono font-bold text-blue-600">{history.length}</div>
         </div>
       </div>
 
@@ -156,6 +165,12 @@ export const LamiGame = () => {
         result={viewingResult}
         onClose={() => setViewingResult(null)}
         players={players}
+      />
+      <LamiReportModal
+        isOpen={isReportOpen}
+        onClose={() => setIsReportOpen(false)}
+        players={players}
+        history={history}
       />
     </div>
   );

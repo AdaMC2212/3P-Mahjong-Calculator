@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Settings, RotateCcw, Trash2, CircleHelp } from 'lucide-react';
+import { Settings, RotateCcw, Trash2, CircleHelp, BarChart3 } from 'lucide-react';
 import { Player, GameSettings, RoundResult, WinType, PlayerBonusStats } from '../types';
 import { DEFAULT_SETTINGS, INITIAL_PLAYERS } from '../constants';
 import { calculatePayout } from '../services/scoringLogic';
@@ -8,6 +8,7 @@ import { SettingsModal } from './SettingsModal';
 import { ScoringForm } from './ScoringForm';
 import { HistoryDetailModal } from './HistoryDetailModal';
 import { HelpModal } from './HelpModal';
+import { MahjongReportModal } from './MahjongReportModal';
 
 export const MahjongGame = () => {
   const [players, setPlayers] = useState<Player[]>(INITIAL_PLAYERS);
@@ -16,6 +17,7 @@ export const MahjongGame = () => {
   const [history, setHistory] = useState<RoundResult[]>([]);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isHelpOpen, setIsHelpOpen] = useState(false);
+  const [isReportOpen, setIsReportOpen] = useState(false);
   const [viewingResult, setViewingResult] = useState<RoundResult | null>(null);
 
   const handleCalculate = (
@@ -78,6 +80,9 @@ export const MahjongGame = () => {
         <button onClick={resetGame} className="p-2 text-gray-500 hover:bg-gray-100 rounded-full transition" title="Reset">
           <RotateCcw size={20} />
         </button>
+        <button onClick={() => setIsReportOpen(true)} className="p-2 text-gray-500 hover:bg-gray-100 rounded-full transition" title="Round Report">
+          <BarChart3 size={20} />
+        </button>
         <button onClick={() => setIsHelpOpen(true)} className="p-2 text-gray-500 hover:bg-gray-100 rounded-full transition" title="Help">
           <CircleHelp size={20} />
         </button>
@@ -102,6 +107,10 @@ export const MahjongGame = () => {
               </div>
             );
           })}
+        </div>
+        <div className="mt-4 pt-3 border-t border-gray-100 text-center">
+          <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Total Rounds Played</span>
+          <div className="text-xl font-mono font-bold text-mj-table">{history.length}</div>
         </div>
       </div>
 
@@ -149,6 +158,12 @@ export const MahjongGame = () => {
       />
       <HistoryDetailModal isOpen={!!viewingResult} result={viewingResult} onClose={() => setViewingResult(null)} players={players} />
       <HelpModal isOpen={isHelpOpen} onClose={() => setIsHelpOpen(false)} />
+      <MahjongReportModal
+        isOpen={isReportOpen}
+        onClose={() => setIsReportOpen(false)}
+        players={players}
+        history={history}
+      />
     </div>
   );
 };
