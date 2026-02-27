@@ -13,28 +13,32 @@ export const MahjongReportModal: React.FC<Props> = ({ isOpen, onClose, players, 
   if (!isOpen) return null;
 
   const totalRounds = history.length;
-  const zimoCount = history.filter((round) => round.winType === WinType.ZIMO).length;
-  const discardCount = totalRounds - zimoCount;
-  const burstCount = history.filter((round) => round.isBurst).length;
-  const averageFan = totalRounds > 0
-    ? history.reduce((sum, round) => sum + round.fan, 0) / totalRounds
-    : 0;
-
-  const winsByPlayer = players.reduce<Record<number, number>>((acc, player) => {
-    acc[player.id] = history.filter((round) => round.winnerId === player.id).length;
-    return acc;
-  }, {});
-
-  const netByPlayer = players.reduce<Record<number, number>>((acc, player) => {
-    acc[player.id] = history.reduce((sum, round) => {
+  const playerReport = players.map((player) => {
+    const wonRounds = history.filter((round) => round.winnerId === player.id);
+    const wins = wonRounds.length;
+    const zimoWins = wonRounds.filter((round) => round.winType === WinType.ZIMO).length;
+    const chunWins = wins - zimoWins;
+    const averageWinFan = wins > 0
+      ? wonRounds.reduce((sum, round) => sum + round.fan, 0) / wins
+      : 0;
+    const netAmount = history.reduce((sum, round) => {
       const transaction = round.transactions.find((tx) => tx.playerId === player.id);
       return sum + (transaction?.amount || 0);
     }, 0);
-    return acc;
-  }, {});
 
-  const maxWins = Math.max(1, ...Object.values(winsByPlayer));
-  const maxAbsNet = Math.max(1, ...Object.values(netByPlayer).map((amount) => Math.abs(amount)));
+    return {
+      player,
+      wins,
+      zimoWins,
+      chunWins,
+      averageWinFan,
+      winRate: totalRounds > 0 ? (wins / totalRounds) * 100 : 0,
+      netAmount
+    };
+  });
+
+  const maxWins = Math.max(1, ...playerReport.map((item) => item.wins));
+  const maxAbsNet = Math.max(1, ...playerReport.map((item) => Math.abs(item.netAmount)));
 
   return (
     <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
@@ -50,40 +54,45 @@ export const MahjongReportModal: React.FC<Props> = ({ isOpen, onClose, players, 
         </div>
 
         <div className="p-5 overflow-y-auto space-y-5">
-          <div className="grid grid-cols-2 gap-3 text-xs">
-            <div className="bg-gray-50 border border-gray-200 rounded-xl p-3">
-              <div className="text-gray-500 font-bold uppercase">Total Rounds</div>
-              <div className="text-2xl font-mono font-bold text-gray-900">{totalRounds}</div>
-            </div>
-            <div className="bg-gray-50 border border-gray-200 rounded-xl p-3">
-              <div className="text-gray-500 font-bold uppercase">Average Fan</div>
-              <div className="text-2xl font-mono font-bold text-gray-900">{averageFan.toFixed(1)}</div>
-            </div>
-            <div className="bg-gray-50 border border-gray-200 rounded-xl p-3">
-              <div className="text-gray-500 font-bold uppercase">Self Draw</div>
-              <div className="text-2xl font-mono font-bold text-mj-table">{zimoCount}</div>
-            </div>
-            <div className="bg-gray-50 border border-gray-200 rounded-xl p-3">
-              <div className="text-gray-500 font-bold uppercase">Discard / Burst</div>
-              <div className="text-lg font-mono font-bold text-red-500">
-                {discardCount} / {burstCount}
-              </div>
-            </div>
+          <div className="bg-gray-50 border border-gray-200 rounded-xl p-3">
+            <div className="text-gray-500 font-bold uppercase text-xs">Rounds In This Report</div>
+            <div className="text-2xl font-mono font-bold text-gray-900">{totalRounds}</div>
           </div>
+
+          <section className="space-y-2">
+            <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider">Player Breakdown</h3>
+            <div className="space-y-2">
+              {playerReport.map((item) => (
+                <div key={item.player.id} className="bg-gray-50 border border-gray-200 rounded-lg p-3">
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="font-bold text-gray-800">{item.player.name}</span>
+                    <span className={`font-mono font-bold ${item.netAmount >= 0 ? 'text-mj-table' : 'text-red-500'}`}>
+                      {item.netAmount >= 0 ? '+' : ''}{item.netAmount.toFixed(2)}
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 text-[11px] text-gray-600">
+                    <div>Wins: <span className="font-bold text-gray-800">{item.wins}</span></div>
+                    <div>Win Rate: <span className="font-bold text-gray-800">{item.winRate.toFixed(0)}%</span></div>
+                    <div>Zimo: <span className="font-bold text-gray-800">{item.zimoWins}</span></div>
+                    <div>Discard: <span className="font-bold text-gray-800">{item.chunWins}</span></div>
+                    <div className="col-span-2">Avg Fan (when won): <span className="font-bold text-gray-800">{item.averageWinFan.toFixed(1)}</span></div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
 
           <section className="space-y-2">
             <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider">Win Share</h3>
             <div className="space-y-2">
-              {players.map((player) => {
-                const wins = winsByPlayer[player.id] || 0;
-                const widthPct = (wins / maxWins) * 100;
-                const sharePct = totalRounds > 0 ? (wins / totalRounds) * 100 : 0;
+              {playerReport.map((item) => {
+                const widthPct = (item.wins / maxWins) * 100;
 
                 return (
-                  <div key={player.id} className="bg-gray-50 border border-gray-200 rounded-lg p-2.5">
+                  <div key={item.player.id} className="bg-gray-50 border border-gray-200 rounded-lg p-2.5">
                     <div className="flex justify-between text-xs mb-1">
-                      <span className="font-bold text-gray-700">{player.name}</span>
-                      <span className="font-mono text-gray-500">{wins} wins ({sharePct.toFixed(0)}%)</span>
+                      <span className="font-bold text-gray-700">{item.player.name}</span>
+                      <span className="font-mono text-gray-500">{item.wins} wins ({item.winRate.toFixed(0)}%)</span>
                     </div>
                     <div className="h-2.5 bg-white rounded-full overflow-hidden border border-gray-100">
                       <div className="h-full bg-mj-table" style={{ width: `${widthPct}%` }} />
@@ -97,21 +106,20 @@ export const MahjongReportModal: React.FC<Props> = ({ isOpen, onClose, players, 
           <section className="space-y-2">
             <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider">Net Settlement</h3>
             <div className="space-y-2">
-              {players.map((player) => {
-                const netAmount = netByPlayer[player.id] || 0;
-                const widthPct = (Math.abs(netAmount) / maxAbsNet) * 50;
+              {playerReport.map((item) => {
+                const widthPct = (Math.abs(item.netAmount) / maxAbsNet) * 50;
 
                 return (
-                  <div key={player.id} className="bg-gray-50 border border-gray-200 rounded-lg p-2.5">
+                  <div key={item.player.id} className="bg-gray-50 border border-gray-200 rounded-lg p-2.5">
                     <div className="flex justify-between text-xs mb-1">
-                      <span className="font-bold text-gray-700">{player.name}</span>
-                      <span className={`font-mono font-bold ${netAmount >= 0 ? 'text-mj-table' : 'text-red-500'}`}>
-                        {netAmount >= 0 ? '+' : ''}{netAmount.toFixed(2)}
+                      <span className="font-bold text-gray-700">{item.player.name}</span>
+                      <span className={`font-mono font-bold ${item.netAmount >= 0 ? 'text-mj-table' : 'text-red-500'}`}>
+                        {item.netAmount >= 0 ? '+' : ''}{item.netAmount.toFixed(2)}
                       </span>
                     </div>
                     <div className="h-2.5 bg-white rounded-full border border-gray-100 relative overflow-hidden">
                       <div className="absolute top-0 bottom-0 left-1/2 w-px bg-gray-300" />
-                      {netAmount >= 0 ? (
+                      {item.netAmount >= 0 ? (
                         <div
                           className="absolute top-0 bottom-0 left-1/2 bg-mj-table"
                           style={{ width: `${widthPct}%` }}

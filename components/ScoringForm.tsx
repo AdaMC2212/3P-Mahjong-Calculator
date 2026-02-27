@@ -250,29 +250,30 @@ export const ScoringForm: React.FC<Props> = ({ players, settings, dealerId, onCa
               />
           </div>
         </div>
-
         {/* Loser Settlement Section */}
-        <div className="bg-mj-table/5 p-5 rounded-2xl border border-mj-table/10 space-y-4">
-             <h4 className="text-xs font-black text-mj-table uppercase flex items-center gap-2 tracking-widest">
-                <Target size={14} /> Loser Settlement
-             </h4>
-             <div className="grid grid-cols-2 gap-4">
-                 {players.filter(p => p.id !== winnerId).map(p => (
-                     <div key={p.id} className="space-y-1.5">
-                         <label className="block text-[10px] text-gray-500 uppercase font-black truncate">{p.name}'s Fan</label>
-                         <input 
-                            type="number"
-                            min="0"
-                            value={loserFans[p.id] || 0}
-                            onFocus={(e) => e.target.select()}
-                            onChange={e => setLoserFans({...loserFans, [p.id]: Math.max(0, parseInt(e.target.value) || 0)})}
-                            className="w-full border border-gray-200 bg-white rounded-xl p-3 text-center text-sm font-mono font-bold focus:ring-4 focus:ring-mj-table/5 outline-none shadow-sm"
-                         />
-                     </div>
-                 ))}
-             </div>
-             <p className="text-[10px] text-gray-400 italic">Rule: Highest fan loser collects their OWN fan value from the other loser if Fan ≥ 5.</p>
-        </div>
+        {settings.enableLoserSettlement && (
+          <div className="bg-mj-table/5 p-5 rounded-2xl border border-mj-table/10 space-y-4">
+              <h4 className="text-xs font-black text-mj-table uppercase flex items-center gap-2 tracking-widest">
+                  <Target size={14} /> Loser Settlement
+              </h4>
+              <div className="grid grid-cols-2 gap-4">
+                  {players.filter(p => p.id !== winnerId).map(p => (
+                      <div key={p.id} className="space-y-1.5">
+                          <label className="block text-[10px] text-gray-500 uppercase font-black truncate">{p.name}'s Fan</label>
+                          <input 
+                              type="number"
+                              min="0"
+                              value={loserFans[p.id] || 0}
+                              onFocus={(e) => e.target.select()}
+                              onChange={e => setLoserFans({...loserFans, [p.id]: Math.max(0, parseInt(e.target.value) || 0)})}
+                              className="w-full border border-gray-200 bg-white rounded-xl p-3 text-center text-sm font-mono font-bold focus:ring-4 focus:ring-mj-table/5 outline-none shadow-sm"
+                          />
+                      </div>
+                  ))}
+              </div>
+              <p className="text-[10px] text-gray-400 italic">Rule: Highest fan loser collects their OWN fan value from the other loser if Fan = 5.</p>
+          </div>
+        )}
 
         {/* Bonus Tiles Section */}
         {(settings.enableFei || settings.enableKong) && (
@@ -353,3 +354,4 @@ export const ScoringForm: React.FC<Props> = ({ players, settings, dealerId, onCa
     </div>
   );
 };
+

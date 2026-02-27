@@ -6,6 +6,7 @@ export const DEFAULT_SETTINGS: GameSettings = {
   burstFan: 10,   // 10 Fan limit default
   enableFei: true,
   enableKong: true,
+  enableLoserSettlement: true,
 };
 
 export const DEFAULT_LAMI_SETTINGS: LamiGameSettings = {

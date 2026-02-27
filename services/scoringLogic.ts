@@ -10,7 +10,7 @@ export const calculatePayout = (
   playerIds: number[],
   loserFans: Record<number, number>
 ): RoundResult => {
-  const { baseValue, burstFan, enableFei, enableKong } = settings;
+  const { baseValue, burstFan, enableFei, enableKong, enableLoserSettlement } = settings;
 
   // --- 1. Hand Score Calculation (Winner takes from Losers) ---
   const rawHandMoney = fan * baseValue;
@@ -90,7 +90,7 @@ export const calculatePayout = (
   const losers = playerIds.filter(id => id !== winnerId);
   let loserSettlementData: RoundResult['loserSettlement'] | undefined;
 
-  if (losers.length === 2) {
+  if (enableLoserSettlement && losers.length === 2) {
     const L1 = losers[0];
     const L2 = losers[1];
     const fan1 = Math.max(0, loserFans[L1] || 0);

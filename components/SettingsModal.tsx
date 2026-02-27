@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { GameSettings, Player } from '../types';
-import { X, Users, DollarSign, Zap, Layers } from 'lucide-react';
+import { X, Users, DollarSign, Zap, Layers, Target } from 'lucide-react';
 
 interface Props {
   isOpen: boolean;
@@ -138,6 +138,22 @@ export const SettingsModal: React.FC<Props> = ({
                 <Toggle 
                   checked={localSettings.enableKong} 
                   onChange={() => setLocalSettings(prev => ({ ...prev, enableKong: !prev.enableKong }))} 
+                />
+              </div>
+
+              <div className="bg-gray-50 p-4 rounded-2xl flex items-center justify-between border border-gray-100">
+                <div className="flex items-center gap-3">
+                  <div className="p-2.5 bg-white rounded-xl text-mj-table shadow-sm">
+                    <Target size={20} />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-black text-gray-900">Enable Loser Settlement</label>
+                    <p className="text-[10px] text-gray-500 font-bold">Rule 2a/2b extra payout between losers</p>
+                  </div>
+                </div>
+                <Toggle 
+                  checked={localSettings.enableLoserSettlement} 
+                  onChange={() => setLocalSettings(prev => ({ ...prev, enableLoserSettlement: !prev.enableLoserSettlement }))} 
                 />
               </div>
             </div>

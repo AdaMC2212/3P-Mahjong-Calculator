@@ -12,6 +12,7 @@ export interface GameSettings {
   burstFan: number; // Max Fan before doubling (Bao)
   enableFei: boolean; // Enable flying counting
   enableKong: boolean; // Enable kong counting
+  enableLoserSettlement: boolean; // Enable loser-to-loser settlement input and payout
 }
 
 export enum WinType {
