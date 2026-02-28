@@ -182,6 +182,13 @@ export const ScoringForm: React.FC<Props> = ({ players, settings, dealerId, onCa
 
   return (
     <div className="space-y-6">
+      {isCameraOpen && (
+        <CameraCapture
+          onCapture={handleCameraCapture}
+          onCancel={() => setIsCameraOpen(false)}
+        />
+      )}
+
       <button
         type="button"
         onClick={() => setIsCameraOpen(true)}
