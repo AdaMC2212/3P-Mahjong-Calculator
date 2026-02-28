@@ -20,6 +20,9 @@ export enum WinType {
   CHUN = 'CHUN', // Discard win
 }
 
+export type SeatWind = 'East' | 'South' | 'West';
+export type VisionWinType = 'Zimo' | 'Ron';
+
 export interface PlayerBonusStats {
   fei: number;
   selfKongs: number;
@@ -61,10 +64,19 @@ export interface RoundResult {
 }
 
 export interface HandAnalysis {
-  fan: number;
-  feiCount: number;
-  kongCount: number;
-  reason: string;
+  gameState: {
+    winnerSeat: SeatWind;
+    winType: VisionWinType;
+    discarderSeat: SeatWind | null;
+    totalFan: number;
+    isLimitHand: boolean;
+  };
+  detectedPatterns: string[];
+  flowerCount: Record<SeatWind, number>;
+  // Optional helper fields used by current UI autofill.
+  feiCount?: number;
+  kongCount?: number;
+  reason?: string;
 }
 
 // --- LAMI TYPES ---

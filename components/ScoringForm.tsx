@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Player, WinType, GameSettings, HandAnalysis, PlayerBonusStats } from '../types';
+import { Player, WinType, GameSettings, HandAnalysis, PlayerBonusStats, SeatWind } from '../types';
 import { Camera, Calculator, Loader2, Plus, Minus, Hand, UserX, Target, Layers } from 'lucide-react';
 import { CameraCapture } from './CameraCapture';
 import { analyzeHandImage } from '../services/geminiService';
@@ -120,16 +120,41 @@ export const ScoringForm: React.FC<Props> = ({ players, settings, dealerId, onCa
     setIsAnalyzing(true);
     try {
       const result: HandAnalysis = await analyzeHandImage(imageSrc);
-      setFan(Math.max(5, result.fan));
+      const dealerIdx = players.findIndex((p) => p.id === dealerId);
+      const seatToPlayerId: Partial<Record<SeatWind, number>> = {};
+
+      if (dealerIdx >= 0 && players.length === 3) {
+        seatToPlayerId.East = players[dealerIdx].id;
+        seatToPlayerId.South = players[(dealerIdx + 1) % 3].id;
+        seatToPlayerId.West = players[(dealerIdx + 2) % 3].id;
+      }
+
+      const winnerFromVision = seatToPlayerId[result.gameState.winnerSeat];
+      const winningPlayerId = winnerFromVision ?? winnerId;
+      const mappedWinType = result.gameState.winType === 'Zimo' ? WinType.ZIMO : WinType.CHUN;
+      const discarderFromVision = result.gameState.discarderSeat
+        ? seatToPlayerId[result.gameState.discarderSeat]
+        : undefined;
+
+      setWinnerId(winningPlayerId);
+      setWinType(mappedWinType);
+      setDiscarderId(mappedWinType === WinType.CHUN ? discarderFromVision : undefined);
+      setFan(Math.max(5, result.gameState.totalFan));
       setAllPlayerStats(prev => ({
         ...prev,
-        [winnerId]: {
-          ...prev[winnerId],
-          fei: result.feiCount,
-          selfKongs: result.kongCount
+        [winningPlayerId]: {
+          ...prev[winningPlayerId],
+          fei: result.feiCount ?? 0,
+          selfKongs: result.kongCount ?? 0
         }
       }));
-      setAnalysisReason(result.reason);
+
+      const reasonParts = [
+        result.detectedPatterns.length > 0 ? `Patterns: ${result.detectedPatterns.join(', ')}` : '',
+        result.reason ?? '',
+        result.gameState.isLimitHand ? 'Limit hand detected.' : ''
+      ].filter(Boolean);
+      setAnalysisReason(reasonParts.join(' '));
     } catch (e) {
       alert("Failed to analyze image.");
     } finally {
@@ -354,4 +379,5 @@ export const ScoringForm: React.FC<Props> = ({ players, settings, dealerId, onCa
     </div>
   );
 };
+
 
