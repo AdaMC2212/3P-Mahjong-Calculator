@@ -22,6 +22,7 @@ export enum WinType {
 
 export type SeatWind = 'East' | 'South' | 'West';
 export type VisionWinType = 'Zimo' | 'Ron';
+export type AnalysisSource = 'gemini' | 'cache' | 'voted';
 
 export interface PlayerBonusStats {
   fei: number;
@@ -73,10 +74,33 @@ export interface HandAnalysis {
   };
   detectedPatterns: string[];
   flowerCount: Record<SeatWind, number>;
+  confidenceScore: number;
+  lowConfidenceReasons: string[];
+  source: AnalysisSource;
+  rawExtraction?: TileExtractionResult;
   // Optional helper fields used by current UI autofill.
   feiCount?: number;
   kongCount?: number;
   reason?: string;
+}
+
+export interface SeatTileExtraction {
+  concealed: string[];
+  exposedMelds: string[][];
+  flowers: string[];
+}
+
+export interface TileExtractionResult {
+  seats: Record<SeatWind, SeatTileExtraction>;
+  winnerSeat: SeatWind;
+  winType: VisionWinType;
+  discarderSeat: SeatWind | null;
+  feiCount: number;
+  selfKongCount: number;
+  seatConfidence: Record<SeatWind, number>;
+  suggestedPatterns: string[];
+  confidenceScore: number;
+  notes?: string;
 }
 
 // --- LAMI TYPES ---

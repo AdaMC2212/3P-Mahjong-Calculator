@@ -77,6 +77,7 @@ export const ScoringForm: React.FC<Props> = ({ players, settings, dealerId, onCa
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisReason, setAnalysisReason] = useState<string>('');
   const [formError, setFormError] = useState<string>('');
+  const [scanCooldownUntil, setScanCooldownUntil] = useState<number>(0);
 
   useEffect(() => {
     const { playerStats, loserFans } = createInitialRoundState(players);
@@ -118,6 +119,7 @@ export const ScoringForm: React.FC<Props> = ({ players, settings, dealerId, onCa
   const handleCameraCapture = async (imageSrc: string) => {
     setIsCameraOpen(false);
     setIsAnalyzing(true);
+    setScanCooldownUntil(Date.now() + 2000);
     try {
       const result: HandAnalysis = await analyzeHandImage(imageSrc);
       const dealerIdx = players.findIndex((p) => p.id === dealerId);
@@ -151,15 +153,33 @@ export const ScoringForm: React.FC<Props> = ({ players, settings, dealerId, onCa
 
       const reasonParts = [
         result.detectedPatterns.length > 0 ? `Patterns: ${result.detectedPatterns.join(', ')}` : '',
-        result.reason ?? '',
+        `Confidence: ${(result.confidenceScore * 100).toFixed(0)}%`,
+        `Source: ${result.source}`,
+        ...(result.lowConfidenceReasons || []),
+        result.reason ?? ''
+      ].filter(Boolean);
+      if (result.lowConfidenceReasons.length > 0) {
+        reasonParts.unshift('Manual review suggested.');
+      }
+      const summary = [
+        ...reasonParts,
         result.gameState.isLimitHand ? 'Limit hand detected.' : ''
       ].filter(Boolean);
-      setAnalysisReason(reasonParts.join(' '));
+      setAnalysisReason(summary.join(' '));
     } catch (e) {
       alert("Failed to analyze image.");
     } finally {
       setIsAnalyzing(false);
     }
+  };
+
+  const openCamera = () => {
+    if (Date.now() < scanCooldownUntil) {
+      const remaining = Math.ceil((scanCooldownUntil - Date.now()) / 1000);
+      setAnalysisReason(`Please wait ${remaining}s before scanning again to avoid API throttling.`);
+      return;
+    }
+    setIsCameraOpen(true);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -191,7 +211,7 @@ export const ScoringForm: React.FC<Props> = ({ players, settings, dealerId, onCa
 
       <button
         type="button"
-        onClick={() => setIsCameraOpen(true)}
+        onClick={openCamera}
         disabled={isAnalyzing}
         className="w-full bg-white text-blue-600 border border-blue-100 p-6 rounded-2xl flex items-center justify-center gap-3 font-bold hover:bg-blue-50 transition shadow-sm"
       >
